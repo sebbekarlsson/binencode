@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
-    "outDir": "./dist",
+    "outDir": "./dist/esm",
     "module": "esnext",
+    "moduleResolution": "bundler",
     "target": "esnext",
     "lib": ["esnext", "dom", "dom.iterable"],
     "types": ["node"],
