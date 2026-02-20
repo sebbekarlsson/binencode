@@ -1,11 +1,20 @@
-import { bin, Binary, BinaryComponentType, BinaryType } from "./binary";
+import {
+  bin,
+  Binary,
+  BinaryComponentType,
+  BinaryHint,
+  BinaryType,
+} from "./binary";
 import { BinaryBuffer } from "./buffer";
 
 export namespace serial {
   export const decode = (buff: BinaryBuffer): Binary => {
     const bintype = buff.readInt32() as BinaryType;
     const comptype = buff.readInt32() as BinaryComponentType;
+    const hint = buff.readInt32() as BinaryHint;
     const count = buff.readInt32();
+
+    if (hint === BinaryHint.STRING && count <= 0) return bin.string("");
 
     switch (bintype) {
       case BinaryType.SCALAR: {
@@ -16,7 +25,7 @@ export namespace serial {
           case BinaryComponentType.BOOL:
             return bin.bool(!!buff.readByte());
           case BinaryComponentType.CHAR:
-            return bin.char(buff.readChar());
+            return bin.char(buff.readChar(count));
           case BinaryComponentType.INT32:
             return bin.int32(buff.readInt32());
           case BinaryComponentType.UINT32:
@@ -42,6 +51,8 @@ export namespace serial {
           const item = decode(buff);
           items.push(item);
         }
+        if (items.length <= 0 && hint === BinaryHint.STRING)
+          return bin.string("");
         return bin.array(...items);
       }
       case BinaryType.OBJECT: {
@@ -63,7 +74,7 @@ export namespace serial {
             kbuff.write(kx.data);
           }
           kbuff.resetCursor();
-          const ks = kbuff.readString(k.data.length);
+          const ks = kbuff.readString(kbuff.data.length);
           const v = decode(buff);
           m.set(ks, v);
         }
@@ -82,6 +93,7 @@ export namespace serial {
     const enc = (binary: Binary): BinaryBuffer => {
       buff.writeInt32(binary.type);
       buff.writeInt32(binary.componentType);
+      buff.writeInt32(binary.hint);
       buff.writeInt32(binary.count);
 
       switch (binary.type) {
@@ -153,7 +165,9 @@ export namespace serial {
           }
         }
         case BinaryType.ARRAY: {
+          if (x.hint === BinaryHint.STRING && x.data.length <= 0) return "";
           if (
+            x.data.length > 0 &&
             x.data.every((x) => x.componentType === BinaryComponentType.CHAR)
           ) {
             const buff = new BinaryBuffer();
@@ -162,17 +176,16 @@ export namespace serial {
               buff.write(item.data);
             }
             buff.resetCursor();
-            const str = buff.readString(x.data.length);
+            const str = buff.readString(buff.data.length);
             return str;
           }
           return x.data.map((v) => convert(v));
-        };
+        }
         case BinaryType.OBJECT: {
-          return Object.fromEntries(Array.from(x.data.entries()).map(([k, v]) => [
-            k,
-            convert(v)
-          ]))
-        };
+          return Object.fromEntries(
+            Array.from(x.data.entries()).map(([k, v]) => [k, convert(v)]),
+          );
+        }
       }
     };
     return convert(x);

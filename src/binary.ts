@@ -1,6 +1,5 @@
 import { BinaryBuffer } from "./buffer";
-import { has,
-isPlainObject } from "./guards";
+import { has, isPlainObject } from "./guards";
 
 export const BinSymbol = Symbol("Bin");
 export type BinSymbol = typeof BinSymbol;
@@ -25,6 +24,11 @@ export enum BinaryType {
   OBJECT = 2,
 }
 
+export enum BinaryHint {
+  NONE = 0,
+  STRING = 1,
+}
+
 export type LooseBinary<Data = any> = {
   componentType: number;
   type: number;
@@ -35,6 +39,7 @@ export type LooseBinary<Data = any> = {
 export interface BinaryBase<
   ComponentType extends number,
   Type extends BinaryType,
+  Hint extends BinaryHint = BinaryHint,
   Data extends any = BinaryBuffer,
 > extends LooseBinary<Data> {
   componentType: ComponentType;
@@ -42,6 +47,7 @@ export interface BinaryBase<
   count: number;
   data: Data;
   bin: BinSymbol;
+  hint: Hint;
 }
 
 export interface BinaryNull extends BinaryBase<
@@ -87,11 +93,13 @@ export interface BinaryFloat64 extends BinaryBase<
 export interface BinaryArray extends BinaryBase<
   BinaryComponentType.BINARY,
   BinaryType.ARRAY,
+  BinaryHint,
   Binary[]
 > {}
 export interface BinaryObject extends BinaryBase<
   BinaryComponentType.BINARY,
   BinaryType.OBJECT,
+  BinaryHint,
   Map<string, Binary>
 > {}
 
@@ -109,11 +117,10 @@ export type Binary =
   | BinaryArray
   | BinaryObject;
 
-
 export const isBin = (x: unknown): x is Binary => {
-  if (typeof x !== 'object' || x === null) return false;
-  return has(x, 'bin') && x.bin === BinSymbol;
-}
+  if (typeof x !== "object" || x === null) return false;
+  return has(x, "bin") && x.bin === BinSymbol;
+};
 
 export namespace bin {
   export const nil = (): BinaryNull => ({
@@ -121,7 +128,8 @@ export namespace bin {
     type: BinaryType.SCALAR,
     count: 0,
     data: new BinaryBuffer(),
-    bin: BinSymbol
+    bin: BinSymbol,
+    hint: BinaryHint.NONE,
   });
 
   export const int32 = (value: number): BinaryInt32 => ({
@@ -134,7 +142,8 @@ export namespace bin {
       buff.setCursor(0);
       return buff;
     })(),
-    bin: BinSymbol
+    bin: BinSymbol,
+    hint: BinaryHint.NONE,
   });
 
   export const int64 = (value: bigint): BinaryInt64 => ({
@@ -147,7 +156,8 @@ export namespace bin {
       buff.setCursor(0);
       return buff;
     })(),
-    bin: BinSymbol
+    bin: BinSymbol,
+    hint: BinaryHint.NONE,
   });
 
   export const uint32 = (value: number): BinaryUint32 => ({
@@ -160,7 +170,8 @@ export namespace bin {
       buff.setCursor(0);
       return buff;
     })(),
-    bin: BinSymbol
+    bin: BinSymbol,
+    hint: BinaryHint.NONE,
   });
 
   export const uint64 = (value: bigint): BinaryUint64 => ({
@@ -173,7 +184,8 @@ export namespace bin {
       buff.setCursor(0);
       return buff;
     })(),
-    bin: BinSymbol
+    bin: BinSymbol,
+    hint: BinaryHint.NONE,
   });
 
   export const float32 = (value: number): BinaryFloat32 => ({
@@ -186,7 +198,8 @@ export namespace bin {
       buff.setCursor(0);
       return buff;
     })(),
-    bin: BinSymbol
+    bin: BinSymbol,
+    hint: BinaryHint.NONE,
   });
 
   export const float64 = (value: number): BinaryFloat64 => ({
@@ -199,7 +212,8 @@ export namespace bin {
       buff.setCursor(0);
       return buff;
     })(),
-    bin: BinSymbol
+    bin: BinSymbol,
+    hint: BinaryHint.NONE,
   });
 
   export const byte = (value: number): BinaryByte => ({
@@ -212,7 +226,8 @@ export namespace bin {
       buff.setCursor(0);
       return buff;
     })(),
-    bin: BinSymbol
+    bin: BinSymbol,
+    hint: BinaryHint.NONE,
   });
 
   export const bool = (value: boolean): BinaryBool => ({
@@ -225,36 +240,43 @@ export namespace bin {
       buff.setCursor(0);
       return buff;
     })(),
-    bin: BinSymbol
+    bin: BinSymbol,
+    hint: BinaryHint.NONE,
   });
 
-  export const char = (value: string): BinaryChar => ({
-    componentType: BinaryComponentType.CHAR,
-    type: BinaryType.SCALAR,
-    count: 1,
-    data: (() => {
-      const buff = new BinaryBuffer();
-      buff.writeChar(value);
-      buff.setCursor(0);
-      return buff;
-    })(),
-    bin: BinSymbol
-  });
+  export const char = (value: string): BinaryChar => {
+    const buff = new BinaryBuffer();
+    buff.writeChar(value);
+    buff.setCursor(0);
+    return {
+      componentType: BinaryComponentType.CHAR,
+      type: BinaryType.SCALAR,
+      count: buff.data.length,
+      data: buff,
+      bin: BinSymbol,
+      hint: BinaryHint.NONE,
+    };
+  };
 
-  export const string = (value: string): BinaryArray => ({
-    componentType: BinaryComponentType.BINARY,
-    type: BinaryType.ARRAY,
-    count: value.length,
-    data: Array.from(value).map((x) => char(x)),
-    bin: BinSymbol
-  });
+  export const string = (value: string): BinaryArray => {
+    const chars = Array.from(value).map((x) => char(x));
+    return {
+      componentType: BinaryComponentType.BINARY,
+      type: BinaryType.ARRAY,
+      count: chars.length,
+      data: chars,
+      bin: BinSymbol,
+      hint: BinaryHint.STRING,
+    };
+  };
 
   export const array = (...args: Binary[]): BinaryArray => ({
     componentType: BinaryComponentType.BINARY,
     type: BinaryType.ARRAY,
     count: args.length,
     data: args,
-    bin: BinSymbol
+    bin: BinSymbol,
+    hint: BinaryHint.NONE,
   });
 
   export const object = (
@@ -265,7 +287,8 @@ export namespace bin {
       type: BinaryType.OBJECT,
       count: data instanceof Map ? data.size : Object.entries(data).length,
       data: data instanceof Map ? data : new Map(Object.entries(data)),
-      bin: BinSymbol
+      bin: BinSymbol,
+      hint: BinaryHint.NONE,
     };
   };
 

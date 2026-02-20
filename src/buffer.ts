@@ -56,10 +56,7 @@ export class BinaryBuffer {
   }
 
   writeByte(x: number): void {
-    const buff = new ArrayBuffer(4);
-    const view = new DataView(buff);
-    view.setUint8(0, x);
-    this.write(buff);
+    this.write([x]);
   }
   writeChar(x: string): void {
     const encoder = new TextEncoder();
@@ -116,9 +113,9 @@ export class BinaryBuffer {
   readByte(): number {
     return new DataView(this.read(1).buffer).getUint8(0);
   }
-  readChar(): string {
+  readChar(byteCount: number = 1): string {
     const decoder = new TextDecoder();
-    return decoder.decode(this.read(1));
+    return decoder.decode(this.read(byteCount));
   }
   readInt32(): number {
     return new DataView(this.read(4).buffer).getInt32(0);
