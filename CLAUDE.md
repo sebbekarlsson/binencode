@@ -39,7 +39,7 @@ This is a TypeScript library for encoding/decoding structured binary data. All p
 
 ### TypeScript Config Notes
 
-- Path alias `@bintool/*` maps to `./src/*`
+- Path alias `@bincode/*` maps to `./src/*`
 - Strict mode with `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes` enabled
 - `isolatedModules: true` — avoid type-only imports without `import type`
 - Test files (`*.test.ts`) are excluded from the build but included by vitest

@@ -18,7 +18,7 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "paths": {
-      "@bintool/*": ["./src/*"]
+      "@bincode/*": ["./src/*"]
     }
   },
   "include": ["./src/**/*.ts"],
