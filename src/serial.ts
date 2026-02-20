@@ -1,22 +1,17 @@
-import {
-  bin,
-  Binary,
-  BinaryComponentType,
-  BinaryHint,
-  BinaryType,
-} from "./binary";
+import { bin, Binary, BinaryComponentType, BinaryType } from "./binary";
 import { BinaryBuffer } from "./buffer";
 
 export namespace serial {
   export const decode = (buff: BinaryBuffer): Binary => {
     const bintype = buff.readInt32() as BinaryType;
     const comptype = buff.readInt32() as BinaryComponentType;
-    const hint = buff.readInt32() as BinaryHint;
     const count = buff.readInt32();
 
-    if (hint === BinaryHint.STRING && count <= 0) return bin.string("");
-
     switch (bintype) {
+      case BinaryType.STRING: {
+        if (count <= 0) return bin.string("");
+        return bin.string(buff.readString(count));
+      }
       case BinaryType.SCALAR: {
         if (count <= 0) return bin.nil();
         switch (comptype) {
@@ -42,44 +37,33 @@ export namespace serial {
             return bin.nil();
           case BinaryComponentType.BINARY:
             return bin.array(decode(buff));
+          default:
+            throw new Error("not reached");
         }
       }
       case BinaryType.ARRAY: {
         const items: Binary[] = [];
-
         for (let i = 0; i < count; i++) {
           const item = decode(buff);
           items.push(item);
         }
-        if (items.length <= 0 && hint === BinaryHint.STRING)
-          return bin.string("");
         return bin.array(...items);
       }
       case BinaryType.OBJECT: {
         const m = new Map<string, Binary>();
         for (let i = 0; i < count; i++) {
           const k = decode(buff);
-          if (k.componentType !== BinaryComponentType.BINARY)
-            throw new Error("Expected binary");
-          if (k.type !== BinaryType.ARRAY) throw new Error("Expected array");
-          if (
-            !k.data.every((x) => x.componentType === BinaryComponentType.CHAR)
-          )
-            throw new Error("Expected array of chars");
-          if (!k.data.every((x) => x.type === BinaryType.SCALAR))
-            throw new Error("Expected array of char scalars");
-          const kbuff = new BinaryBuffer();
-          kbuff.saveCursor();
-          for (const kx of k.data) {
-            kbuff.write(kx.data);
-          }
-          kbuff.resetCursor();
-          const ks = kbuff.readString(kbuff.data.length);
+          if (k.type !== BinaryType.STRING) throw new Error("Expected string");
+          k.data.saveCursor();
+          const ks = k.data.readString(k.count);
+          k.data.resetCursor();
           const v = decode(buff);
           m.set(ks, v);
         }
         return bin.object(m);
       }
+      default:
+        throw new Error(`not reached ${bintype}`);
     }
   };
 
@@ -93,10 +77,13 @@ export namespace serial {
     const enc = (binary: Binary): BinaryBuffer => {
       buff.writeInt32(binary.type);
       buff.writeInt32(binary.componentType);
-      buff.writeInt32(binary.hint);
       buff.writeInt32(binary.count);
 
       switch (binary.type) {
+        case BinaryType.STRING: {
+          buff.write(binary.data);
+          return buff;
+        }
         case BinaryType.SCALAR: {
           switch (binary.componentType) {
             case BinaryComponentType.NULL:
@@ -139,6 +126,9 @@ export namespace serial {
   export const toJS = (x: Binary): unknown => {
     const convert = (x: Binary): unknown => {
       switch (x.type) {
+        case BinaryType.STRING: {
+          return x.data.with((buff) => buff.readString(x.count));
+        }
         case BinaryType.SCALAR: {
           switch (x.componentType) {
             case BinaryComponentType.BYTE:
@@ -161,24 +151,11 @@ export namespace serial {
               return x.data.with((buff) => buff.readFloat64());
             case BinaryComponentType.NULL:
               return null;
-            //case BinaryComponentType.BINARY: return convert(x)
+            default:
+              throw new Error("Not reached");
           }
         }
         case BinaryType.ARRAY: {
-          if (x.hint === BinaryHint.STRING && x.data.length <= 0) return "";
-          if (
-            x.data.length > 0 &&
-            x.data.every((x) => x.componentType === BinaryComponentType.CHAR)
-          ) {
-            const buff = new BinaryBuffer();
-            buff.saveCursor();
-            for (const item of x.data) {
-              buff.write(item.data);
-            }
-            buff.resetCursor();
-            const str = buff.readString(buff.data.length);
-            return str;
-          }
           return x.data.map((v) => convert(v));
         }
         case BinaryType.OBJECT: {

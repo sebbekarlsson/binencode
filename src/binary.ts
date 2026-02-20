@@ -22,11 +22,7 @@ export enum BinaryType {
   SCALAR = 0,
   ARRAY = 1,
   OBJECT = 2,
-}
-
-export enum BinaryHint {
-  NONE = 0,
-  STRING = 1,
+  STRING = 3,
 }
 
 export type LooseBinary<Data = any> = {
@@ -39,7 +35,6 @@ export type LooseBinary<Data = any> = {
 export interface BinaryBase<
   ComponentType extends number,
   Type extends BinaryType,
-  Hint extends BinaryHint = BinaryHint,
   Data extends any = BinaryBuffer,
 > extends LooseBinary<Data> {
   componentType: ComponentType;
@@ -47,7 +42,6 @@ export interface BinaryBase<
   count: number;
   data: Data;
   bin: BinSymbol;
-  hint: Hint;
 }
 
 export interface BinaryNull extends BinaryBase<
@@ -93,14 +87,16 @@ export interface BinaryFloat64 extends BinaryBase<
 export interface BinaryArray extends BinaryBase<
   BinaryComponentType.BINARY,
   BinaryType.ARRAY,
-  BinaryHint,
   Binary[]
 > {}
 export interface BinaryObject extends BinaryBase<
   BinaryComponentType.BINARY,
   BinaryType.OBJECT,
-  BinaryHint,
   Map<string, Binary>
+> {}
+export interface BinaryString extends BinaryBase<
+  BinaryComponentType.CHAR,
+  BinaryType.STRING
 > {}
 
 export type Binary =
@@ -115,7 +111,8 @@ export type Binary =
   | BinaryFloat32
   | BinaryFloat64
   | BinaryArray
-  | BinaryObject;
+  | BinaryObject
+  | BinaryString;
 
 export const isBin = (x: unknown): x is Binary => {
   if (typeof x !== "object" || x === null) return false;
@@ -129,7 +126,6 @@ export namespace bin {
     count: 0,
     data: new BinaryBuffer(),
     bin: BinSymbol,
-    hint: BinaryHint.NONE,
   });
 
   export const int32 = (value: number): BinaryInt32 => ({
@@ -143,7 +139,6 @@ export namespace bin {
       return buff;
     })(),
     bin: BinSymbol,
-    hint: BinaryHint.NONE,
   });
 
   export const int64 = (value: bigint): BinaryInt64 => ({
@@ -157,7 +152,6 @@ export namespace bin {
       return buff;
     })(),
     bin: BinSymbol,
-    hint: BinaryHint.NONE,
   });
 
   export const uint32 = (value: number): BinaryUint32 => ({
@@ -171,7 +165,6 @@ export namespace bin {
       return buff;
     })(),
     bin: BinSymbol,
-    hint: BinaryHint.NONE,
   });
 
   export const uint64 = (value: bigint): BinaryUint64 => ({
@@ -185,7 +178,6 @@ export namespace bin {
       return buff;
     })(),
     bin: BinSymbol,
-    hint: BinaryHint.NONE,
   });
 
   export const float32 = (value: number): BinaryFloat32 => ({
@@ -199,7 +191,6 @@ export namespace bin {
       return buff;
     })(),
     bin: BinSymbol,
-    hint: BinaryHint.NONE,
   });
 
   export const float64 = (value: number): BinaryFloat64 => ({
@@ -213,7 +204,6 @@ export namespace bin {
       return buff;
     })(),
     bin: BinSymbol,
-    hint: BinaryHint.NONE,
   });
 
   export const byte = (value: number): BinaryByte => ({
@@ -227,7 +217,6 @@ export namespace bin {
       return buff;
     })(),
     bin: BinSymbol,
-    hint: BinaryHint.NONE,
   });
 
   export const bool = (value: boolean): BinaryBool => ({
@@ -241,7 +230,6 @@ export namespace bin {
       return buff;
     })(),
     bin: BinSymbol,
-    hint: BinaryHint.NONE,
   });
 
   export const char = (value: string): BinaryChar => {
@@ -254,19 +242,19 @@ export namespace bin {
       count: buff.data.length,
       data: buff,
       bin: BinSymbol,
-      hint: BinaryHint.NONE,
     };
   };
 
-  export const string = (value: string): BinaryArray => {
-    const chars = Array.from(value).map((x) => char(x));
+  export const string = (value: string): BinaryString => {
+    const buff = new BinaryBuffer();
+    buff.writeString(value);
+    buff.setCursor(0);
     return {
-      componentType: BinaryComponentType.BINARY,
-      type: BinaryType.ARRAY,
-      count: chars.length,
-      data: chars,
+      componentType: BinaryComponentType.CHAR,
+      type: BinaryType.STRING,
+      count: buff.data.length,
+      data: buff,
       bin: BinSymbol,
-      hint: BinaryHint.STRING,
     };
   };
 
@@ -276,7 +264,6 @@ export namespace bin {
     count: args.length,
     data: args,
     bin: BinSymbol,
-    hint: BinaryHint.NONE,
   });
 
   export const object = (
@@ -288,7 +275,6 @@ export namespace bin {
       count: data instanceof Map ? data.size : Object.entries(data).length,
       data: data instanceof Map ? data : new Map(Object.entries(data)),
       bin: BinSymbol,
-      hint: BinaryHint.NONE,
     };
   };
 
