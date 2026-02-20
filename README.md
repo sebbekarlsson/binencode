@@ -1,19 +1,19 @@
-# bincode
+# binencode
 
 TypeScript library for encoding and decoding structured binary data. Supports scalars, strings, arrays, objects, and arbitrary nesting — all serialized to a compact big-endian binary wire format.
 
 ## Installation
 
 ```bash
-npm install bincode
+npm install binencode
 # or
-pnpm add bincode
+pnpm add binencode
 ```
 
 ## Quick Start
 
 ```ts
-import { bin, serial } from "bincode";
+import { bin, serial } from "binencode";
 
 // 1. Create a Binary value
 const value = bin.auto({ name: "Alice", score: 42, tags: ["admin", "user"] });
@@ -31,7 +31,7 @@ const js = serial.toJS(decoded);
 
 ## Core Concepts
 
-All values in bincode are represented as `Binary` objects — typed wrappers around raw byte buffers. The `bin` namespace provides constructors, `serial` handles encode/decode, and `BinaryBuffer` is the underlying growable byte buffer.
+All values in binencode are represented as `Binary` objects — typed wrappers around raw byte buffers. The `bin` namespace provides constructors, `serial` handles encode/decode, and `BinaryBuffer` is the underlying growable byte buffer.
 
 ---
 
@@ -108,7 +108,7 @@ bin.object(new Map([
 Serializes a `Binary` value into a `BinaryBuffer`. Optionally appends into an existing buffer.
 
 ```ts
-import { bin, serial } from "bincode";
+import { bin, serial } from "binencode";
 
 const encoded = serial.encode(bin.auto({ id: 1, name: "Alice" }));
 // encoded.data is a Uint8Array
@@ -140,7 +140,7 @@ serial.toJS(bin.object({ a: bin.bool(true) }))     // => { a: true }
 ### Round-trip a primitive
 
 ```ts
-import { bin, serial } from "bincode";
+import { bin, serial } from "binencode";
 
 const original = bin.float64(Math.PI);
 const buffer = serial.encode(original);
@@ -168,7 +168,7 @@ const decoded = serial.toJS(serial.decode(encoded));
 ### Append to an existing buffer
 
 ```ts
-import { BinaryBuffer, bin, serial } from "bincode";
+import { BinaryBuffer, bin, serial } from "binencode";
 
 const out = new BinaryBuffer();
 serial.encode(bin.int32(1), out);
@@ -179,7 +179,7 @@ serial.encode(bin.string("hello"), out);
 ### Check if a value is Binary
 
 ```ts
-import { bin, isBin } from "bincode";
+import { bin, isBin } from "binencode";
 
 isBin(bin.int32(5))  // => true
 isBin(42)            // => false
@@ -238,7 +238,7 @@ Type guard — returns `true` if `x` is a branded `Binary` value.
 Low-level growable byte buffer used internally. Useful if you need direct byte access or want to manage a shared output buffer.
 
 ```ts
-import { BinaryBuffer } from "bincode";
+import { BinaryBuffer } from "binencode";
 
 const buf = new BinaryBuffer();
 buf.writeInt32(42);
