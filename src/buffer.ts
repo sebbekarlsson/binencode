@@ -46,7 +46,7 @@ export class BinaryBuffer {
     return chunk;
   }
 
-  write(data: ArrayBuffer | BinaryBuffer | Array<number>): void {
+  write(data: ArrayBuffer | Uint8Array | BinaryBuffer | Array<number>): void {
     const buffer =
       data instanceof BinaryBuffer ? data.data : new Uint8Array(data);
     if (buffer.length <= 0) return;

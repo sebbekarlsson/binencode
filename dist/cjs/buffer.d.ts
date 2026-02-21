@@ -10,7 +10,7 @@ export declare class BinaryBuffer {
     private grow;
     seek(pos: number): void;
     read(size: number): Uint8Array;
-    write(data: ArrayBuffer | BinaryBuffer | Array<number>): void;
+    write(data: ArrayBuffer | Uint8Array | BinaryBuffer | Array<number>): void;
     writeByte(x: number): void;
     writeChar(x: string): void;
     writeInt32(x: number): void;
