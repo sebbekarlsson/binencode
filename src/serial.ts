@@ -33,6 +33,8 @@ export namespace serial {
             return bin.float32(buff.readFloat32());
           case BinaryComponentType.FLOAT64:
             return bin.float64(buff.readFloat64());
+          case BinaryComponentType.DATE:
+            return bin.date(new Date(buff.readFloat64()));
           case BinaryComponentType.NULL:
             return bin.nil();
           case BinaryComponentType.BINARY:
@@ -95,6 +97,7 @@ export namespace serial {
             case BinaryComponentType.UINT64:
             case BinaryComponentType.FLOAT32:
             case BinaryComponentType.FLOAT64:
+            case BinaryComponentType.DATE:
             case BinaryComponentType.BOOL:
             case BinaryComponentType.BYTE: {
               buff.write(binary.data);
@@ -149,6 +152,8 @@ export namespace serial {
               return x.data.with((buff) => buff.readFloat32());
             case BinaryComponentType.FLOAT64:
               return x.data.with((buff) => buff.readFloat64());
+            case BinaryComponentType.DATE:
+              return x.data.with((buff) => new Date(buff.readFloat64()));
             case BinaryComponentType.NULL:
               return null;
             default:

@@ -37,6 +37,8 @@ var serial;
                         return binary_1.bin.float32(buff.readFloat32());
                     case binary_1.BinaryComponentType.FLOAT64:
                         return binary_1.bin.float64(buff.readFloat64());
+                    case binary_1.BinaryComponentType.DATE:
+                        return binary_1.bin.date(new Date(buff.readFloat64()));
                     case binary_1.BinaryComponentType.NULL:
                         return binary_1.bin.nil();
                     case binary_1.BinaryComponentType.BINARY:
@@ -94,6 +96,7 @@ var serial;
                         case binary_1.BinaryComponentType.UINT64:
                         case binary_1.BinaryComponentType.FLOAT32:
                         case binary_1.BinaryComponentType.FLOAT64:
+                        case binary_1.BinaryComponentType.DATE:
                         case binary_1.BinaryComponentType.BOOL:
                         case binary_1.BinaryComponentType.BYTE: {
                             buff.write(binary.data);
@@ -146,6 +149,8 @@ var serial;
                             return x.data.with((buff) => buff.readFloat32());
                         case binary_1.BinaryComponentType.FLOAT64:
                             return x.data.with((buff) => buff.readFloat64());
+                        case binary_1.BinaryComponentType.DATE:
+                            return x.data.with((buff) => new Date(buff.readFloat64()));
                         case binary_1.BinaryComponentType.NULL:
                             return null;
                         default:

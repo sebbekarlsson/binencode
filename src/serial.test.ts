@@ -80,6 +80,40 @@ const TESTS: Test[] = [
     input: false,
   },
 
+  // --- dates ---
+  {
+    description: "date",
+    input: new Date("2024-06-15T12:34:56.789Z"),
+  },
+  {
+    description: "date at unix epoch",
+    input: new Date(0),
+  },
+  {
+    description: "date before unix epoch",
+    input: new Date("1955-11-05T06:00:00.000Z"),
+  },
+  {
+    description: "array of dates",
+    input: [new Date("2020-01-01T00:00:00.000Z"), new Date(1718451296789)],
+  },
+  {
+    description: "object with date values",
+    input: {
+      createdAt: new Date("2023-03-10T08:15:30.500Z"),
+      updatedAt: new Date("2024-12-31T23:59:59.999Z"),
+    },
+  },
+  {
+    description: "nested structure with dates",
+    input: {
+      events: [
+        { name: "start", at: new Date("2024-01-01T00:00:00.000Z") },
+        { name: "end", at: new Date("2024-01-02T00:00:00.000Z") },
+      ],
+    },
+  },
+
   // --- strings with emojis ---
   {
     description: "string with a single emoji",

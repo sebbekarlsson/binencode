@@ -16,6 +16,7 @@ export enum BinaryComponentType {
   FLOAT32 = 8,
   FLOAT64 = 9,
   BINARY = 10,
+  DATE = 11,
 }
 
 export enum BinaryType {
@@ -94,6 +95,10 @@ export interface BinaryObject extends BinaryBase<
   BinaryType.OBJECT,
   Map<string, Binary>
 > {}
+export interface BinaryDate extends BinaryBase<
+  BinaryComponentType.DATE,
+  BinaryType.SCALAR
+> {}
 export interface BinaryString extends BinaryBase<
   BinaryComponentType.CHAR,
   BinaryType.STRING
@@ -110,6 +115,7 @@ export type Binary =
   | BinaryUint64
   | BinaryFloat32
   | BinaryFloat64
+  | BinaryDate
   | BinaryArray
   | BinaryObject
   | BinaryString;
@@ -232,6 +238,19 @@ export namespace bin {
     bin: BinSymbol,
   });
 
+  export const date = (value: Date): BinaryDate => ({
+    componentType: BinaryComponentType.DATE,
+    type: BinaryType.SCALAR,
+    count: 1,
+    data: (() => {
+      const buff = new BinaryBuffer();
+      buff.writeFloat64(value.getTime());
+      buff.setCursor(0);
+      return buff;
+    })(),
+    bin: BinSymbol,
+  });
+
   export const char = (value: string): BinaryChar => {
     const buff = new BinaryBuffer();
     buff.writeChar(value);
@@ -302,6 +321,7 @@ export namespace bin {
       case "function":
         return nil();
       case "object": {
+        if (x instanceof Date) return date(x);
         if (!isPlainObject(x)) return nil();
         const m = new Map<string, Binary>();
         for (const [k, v] of Object.entries(x)) {

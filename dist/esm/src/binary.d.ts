@@ -12,8 +12,7 @@ export declare enum BinaryComponentType {
     UINT64 = 7,
     FLOAT32 = 8,
     FLOAT64 = 9,
-    BINARY = 10,
-    DATE = 11
+    BINARY = 10
 }
 export declare enum BinaryType {
     SCALAR = 0,
@@ -58,11 +57,9 @@ export interface BinaryArray extends BinaryBase<BinaryComponentType.BINARY, Bina
 }
 export interface BinaryObject extends BinaryBase<BinaryComponentType.BINARY, BinaryType.OBJECT, Map<string, Binary>> {
 }
-export interface BinaryDate extends BinaryBase<BinaryComponentType.DATE, BinaryType.SCALAR> {
-}
 export interface BinaryString extends BinaryBase<BinaryComponentType.CHAR, BinaryType.STRING> {
 }
-export type Binary = BinaryNull | BinaryByte | BinaryBool | BinaryChar | BinaryInt32 | BinaryInt64 | BinaryUint32 | BinaryUint64 | BinaryFloat32 | BinaryFloat64 | BinaryDate | BinaryArray | BinaryObject | BinaryString;
+export type Binary = BinaryNull | BinaryByte | BinaryBool | BinaryChar | BinaryInt32 | BinaryInt64 | BinaryUint32 | BinaryUint64 | BinaryFloat32 | BinaryFloat64 | BinaryArray | BinaryObject | BinaryString;
 export declare const isBin: (x: unknown) => x is Binary;
 export declare namespace bin {
     const nil: () => BinaryNull;
@@ -74,7 +71,6 @@ export declare namespace bin {
     const float64: (value: number) => BinaryFloat64;
     const byte: (value: number) => BinaryByte;
     const bool: (value: boolean) => BinaryBool;
-    const date: (value: Date) => BinaryDate;
     const char: (value: string) => BinaryChar;
     const string: (value: string) => BinaryString;
     const array: (...args: Binary[]) => BinaryArray;

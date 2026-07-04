@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "rootDir": "./src",
     "outDir": "./dist/esm",
     "module": "esnext",
     "moduleResolution": "bundler",

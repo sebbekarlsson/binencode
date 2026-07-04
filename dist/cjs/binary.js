@@ -17,6 +17,7 @@ var BinaryComponentType;
     BinaryComponentType[BinaryComponentType["FLOAT32"] = 8] = "FLOAT32";
     BinaryComponentType[BinaryComponentType["FLOAT64"] = 9] = "FLOAT64";
     BinaryComponentType[BinaryComponentType["BINARY"] = 10] = "BINARY";
+    BinaryComponentType[BinaryComponentType["DATE"] = 11] = "DATE";
 })(BinaryComponentType || (exports.BinaryComponentType = BinaryComponentType = {}));
 var BinaryType;
 (function (BinaryType) {
@@ -136,6 +137,18 @@ var bin;
         })(),
         bin: exports.BinSymbol,
     });
+    bin.date = (value) => ({
+        componentType: BinaryComponentType.DATE,
+        type: BinaryType.SCALAR,
+        count: 1,
+        data: (() => {
+            const buff = new buffer_1.BinaryBuffer();
+            buff.writeFloat64(value.getTime());
+            buff.setCursor(0);
+            return buff;
+        })(),
+        bin: exports.BinSymbol,
+    });
     bin.char = (value) => {
         const buff = new buffer_1.BinaryBuffer();
         buff.writeChar(value);
@@ -203,6 +216,8 @@ var bin;
             case "function":
                 return bin.nil();
             case "object": {
+                if (x instanceof Date)
+                    return bin.date(x);
                 if (!(0, guards_1.isPlainObject)(x))
                     return bin.nil();
                 const m = new Map();
